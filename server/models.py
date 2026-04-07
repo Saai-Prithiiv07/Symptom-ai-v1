@@ -1,10 +1,14 @@
 from pydantic import BaseModel
 
-
+# -------------------------------
+# ACTION (input to /step)
+# -------------------------------
 class SymptomAction(BaseModel):
-    message: str
+    action: str   # doctor / medicine / rest
 
-
+# -------------------------------
+# OBSERVATION (output from env)
+# -------------------------------
 class SymptomObservation(BaseModel):
     message: str
     severity: int
