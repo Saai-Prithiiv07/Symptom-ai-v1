@@ -1,6 +1,5 @@
 import uuid
-from server.models import ...
-
+from server.models import SymptomAction, SymptomObservation
 class SymptomEnvironment:
 
     def __init__(self):
