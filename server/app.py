@@ -3,6 +3,7 @@ from server.symptom_env import SymptomEnvironment
 from server.database import add_score, get_leaderboard
 from server.auth import register_user, login_user
 from server.models import SymptomAction
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 env = SymptomEnvironment()
@@ -41,3 +42,8 @@ def step(action: SymptomAction):
 @app.get("/leaderboard")
 def leaderboard():
     return get_leaderboard()
+
+@app.get("/ui", response_class=HTMLResponse)
+def ui():
+    with open("index.html") as f:
+        return f.read()
