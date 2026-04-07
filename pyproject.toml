@@ -1,16 +1,13 @@
 [project]
 name = "symptom-ai"
 version = "0.1.0"
-description = "AI-powered symptom simulation environment for OpenEnv hackathon"
-authors = [
-    {name = "Tejaswini S"}
-]
+description = "AI-powered symptom simulation system"
 dependencies = [
     "fastapi",
     "uvicorn",
-    "pydantic"
+    "pydantic",
+    "openenv>=0.2.0"
 ]
 
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+[project.scripts]
+start = "server.app:main"
