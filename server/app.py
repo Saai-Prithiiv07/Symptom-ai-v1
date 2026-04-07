@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from server.symptom_env import SymptomEnvironment
 from server.database import add_score, get_leaderboard
 from server.auth import register_user, login_user
-from models import SymptomAction
+from server.models import SymptomAction
 
 app = FastAPI()
 env = SymptomEnvironment()
