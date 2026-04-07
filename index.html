@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Symptom AI</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body style="background:#0f172a;color:white;text-align:center;">
+
+<h1>🧠 Symptom AI Dashboard</h1>
+
+<input id="username" placeholder="Username">
+<input id="password" type="password">
+<button onclick="login()">Login</button>
+
+<br><br>
+
+<button onclick="start()">Start</button>
+<button onclick="step('rest')">Rest</button>
+<button onclick="step('medicine')">Medicine</button>
+<button onclick="step('doctor')">Doctor</button>
+
+<p>Severity: <span id="severity"></span></p>
+<p>Energy: <span id="energy"></span></p>
+<p>Immunity: <span id="immunity"></span></p>
+<p>Day: <span id="day"></span></p>
+<p>AI: <span id="suggestion"></span></p>
+<p>💡 <span id="explanation"></span></p>
+
+<h3>🏆 Leaderboard</h3>
+<ul id="board"></ul>
+
+<canvas id="chart"></canvas>
+
+<script>
+let chart, dataArr=[], labels=[];
+
+function initChart(){
+ chart=new Chart(document.getElementById("chart"),{
+  type:'line',
+  data:{labels:labels,datasets:[{label:'Severity',data:dataArr}]}
+ });
+}
+
+async function login(){
+ let u=document.getElementById("username").value;
+ let p=document.getElementById("password").value;
+
+ await fetch("/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:u,password:p})});
+}
+
+async function start(){
+ let r=await fetch("/reset");
+ let d=await r.json();
+ dataArr=[];labels=[];
+ initChart();
+ update(d);
+}
+
+async function step(a){
+ let r=await fetch("/step",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:a})});
+ let d=await r.json();
+ update(d);
+}
+
+function update(d){
+ severity.innerText=d.severity;
+ energy.innerText=d.energy;
+ immunity.innerText=d.immunity;
+ day.innerText=d.day;
+ suggestion.innerText=d.ai_suggestion;
+ explanation.innerText=d.explanation;
+
+ dataArr.push(d.severity);
+ labels.push("Day "+d.day);
+ chart.update();
+
+ loadBoard();
+}
+
+async function loadBoard(){
+ let r=await fetch("/leaderboard");
+ let data=await r.json();
+ let b=document.getElementById("board");
+ b.innerHTML="";
+ data.forEach(x=>{
+  let li=document.createElement("li");
+  li.innerText=x.user+" - "+x.score;
+  b.appendChild(li);
+ });
+}
+</script>
+
+</body>
+</html>
