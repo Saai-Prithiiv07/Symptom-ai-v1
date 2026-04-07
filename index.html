@@ -1,94 +1,135 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Symptom AI</title>
+<meta charset="UTF-8">
+<title>Symptom AI Pro Dashboard</title>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+  font-family: 'Segoe UI';
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  color: #38bdf8;
+}
+
+button {
+  padding: 12px 20px;
+  margin: 8px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  transform: scale(1.1);
+}
+
+.reset { background: #22c55e; }
+.doctor { background: #ef4444; }
+.medicine { background: #3b82f6; }
+.rest { background: #f59e0b; }
+
+.card {
+  background: rgba(30, 41, 59, 0.8);
+  margin: 10px;
+  padding: 20px;
+  border-radius: 12px;
+  display: inline-block;
+  width: 150px;
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.3);
+}
+
+canvas {
+  margin-top: 30px;
+  max-width: 700px;
+}
+
+</style>
 </head>
 
-<body style="background:#0f172a;color:white;text-align:center;">
+<body>
 
-<h1>🧠 Symptom AI Dashboard</h1>
+<h1>🧠 Symptom AI Pro Dashboard</h1>
 
-<input id="username" placeholder="Username">
-<input id="password" type="password">
-<button onclick="login()">Login</button>
+<button class="reset" onclick="resetEnv()">Reset</button>
+<button class="doctor" onclick="stepEnv('doctor')">Doctor</button>
+<button class="medicine" onclick="stepEnv('medicine')">Medicine</button>
+<button class="rest" onclick="stepEnv('rest')">Rest</button>
 
-<br><br>
+<div>
+  <div class="card">Severity: <span id="severity">-</span></div>
+  <div class="card">Energy: <span id="energy">-</span></div>
+  <div class="card">Immunity: <span id="immunity">-</span></div>
+  <div class="card">Day: <span id="day">-</span></div>
+</div>
 
-<button onclick="start()">Start</button>
-<button onclick="step('rest')">Rest</button>
-<button onclick="step('medicine')">Medicine</button>
-<button onclick="step('doctor')">Doctor</button>
-
-<p>Severity: <span id="severity"></span></p>
-<p>Energy: <span id="energy"></span></p>
-<p>Immunity: <span id="immunity"></span></p>
-<p>Day: <span id="day"></span></p>
-<p>AI: <span id="suggestion"></span></p>
-<p>💡 <span id="explanation"></span></p>
-
-<h3>🏆 Leaderboard</h3>
-<ul id="board"></ul>
+<h3 id="suggestion"></h3>
 
 <canvas id="chart"></canvas>
 
 <script>
-let chart, dataArr=[], labels=[];
 
-function initChart(){
- chart=new Chart(document.getElementById("chart"),{
-  type:'line',
-  data:{labels:labels,datasets:[{label:'Severity',data:dataArr}]}
- });
+let chart;
+
+function updateUI(data) {
+  document.getElementById("severity").innerText = data.severity;
+  document.getElementById("energy").innerText = data.energy;
+  document.getElementById("immunity").innerText = data.immunity;
+  document.getElementById("day").innerText = data.day;
+  document.getElementById("suggestion").innerText = data.ai_suggestion;
+
+  if (!chart) {
+    const ctx = document.getElementById('chart');
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Severity', data: [], borderColor: '#ef4444' },
+          { label: 'Energy', data: [], borderColor: '#22c55e' },
+          { label: 'Immunity', data: [], borderColor: '#3b82f6' }
+        ]
+      }
+    });
+  }
+
+  chart.data.labels.push("Day " + data.day);
+  chart.data.datasets[0].data.push(data.severity);
+  chart.data.datasets[1].data.push(data.energy);
+  chart.data.datasets[2].data.push(data.immunity);
+  chart.update();
 }
 
-async function login(){
- let u=document.getElementById("username").value;
- let p=document.getElementById("password").value;
-
- await fetch("/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:u,password:p})});
+async function resetEnv() {
+  const res = await fetch("/reset");
+  const data = await res.json();
+  chart = null;
+  updateUI(data);
 }
 
-async function start(){
- let r=await fetch("/reset");
- let d=await r.json();
- dataArr=[];labels=[];
- initChart();
- update(d);
+async function stepEnv(action) {
+  const res = await fetch("/step", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ message: action })
+  });
+
+  const data = await res.json();
+  updateUI(data);
+
+  if (data.done) {
+    alert("✅ Simulation Completed!");
+  }
 }
 
-async function step(a){
- let r=await fetch("/step",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:a})});
- let d=await r.json();
- update(d);
-}
-
-function update(d){
- severity.innerText=d.severity;
- energy.innerText=d.energy;
- immunity.innerText=d.immunity;
- day.innerText=d.day;
- suggestion.innerText=d.ai_suggestion;
- explanation.innerText=d.explanation;
-
- dataArr.push(d.severity);
- labels.push("Day "+d.day);
- chart.update();
-
- loadBoard();
-}
-
-async function loadBoard(){
- let r=await fetch("/leaderboard");
- let data=await r.json();
- let b=document.getElementById("board");
- b.innerHTML="";
- data.forEach(x=>{
-  let li=document.createElement("li");
-  li.innerText=x.user+" - "+x.score;
-  b.appendChild(li);
- });
-}
 </script>
 
 </body>
