@@ -1,0 +1,24 @@
+name: symptom-ai
+version: 1.0
+
+environment:
+  type: api
+  base_url: http://localhost:8000
+
+entrypoint:
+  command: python inference.py
+
+metrics:
+  success:
+    type: boolean
+  score:
+    type: float
+
+limits:
+  max_steps: 7
+  time_limit: 60
+
+description: |
+  AI-powered symptom simulation environment.
+  The agent selects actions (rest, medicine, doctor)
+  to reduce severity and maximize recovery score.
