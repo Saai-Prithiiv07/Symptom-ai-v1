@@ -1,24 +1,65 @@
 name: symptom-ai
-version: 1.0
+version: "1.0.0"
+description: >
+  Real-world symptom triage environment where an agent decides whether a patient
+  should rest, take medicine, or see a doctor. Rewards provide partial progress
+  signals and all tasks score in the [0.0, 1.0] range.
 
-environment:
-  type: api
-  base_url: http://localhost:8000
+tasks:
+  - id: seasonal-cold
+    name: "Seasonal Cold Triage"
+    description: "Mild case where over-escalation should be avoided."
+    difficulty: easy
+    max_steps: 6
+    reward_range: [0.0, 1.0]
+  - id: viral-fever
+    name: "Viral Fever Management"
+    description: "Moderate symptoms requiring balanced care decisions."
+    difficulty: medium
+    max_steps: 7
+    reward_range: [0.0, 1.0]
+  - id: red-flag-breathing
+    name: "Breathing Difficulty Escalation"
+    description: "High-risk case that should be escalated quickly."
+    difficulty: hard
+    max_steps: 8
+    reward_range: [0.0, 1.0]
 
-entrypoint:
-  command: python inference.py
+action_space:
+  type: object
+  properties:
+    message:
+      type: string
+      enum: [rest, medicine, doctor]
+  required: [message]
 
-metrics:
-  success:
-    type: boolean
-  score:
-    type: float
+observation_space:
+  type: object
+  properties:
+    task_id: { type: string }
+    task_name: { type: string }
+    patient_note: { type: string }
+    severity: { type: integer, minimum: 0, maximum: 10 }
+    energy: { type: integer, minimum: 0, maximum: 10 }
+    immunity: { type: integer, minimum: 0, maximum: 10 }
+    day: { type: integer, minimum: 0 }
+    ai_suggestion: { type: string }
+    progress: { type: number, minimum: 0.0, maximum: 1.0 }
+    last_action_error: { type: [string, "null"] }
+    done: { type: boolean }
+    reward: { type: number, minimum: 0.0, maximum: 1.0 }
+    score: { type: number, minimum: 0.0, maximum: 1.0 }
 
-limits:
-  max_steps: 7
-  time_limit: 60
+reward:
+  min: 0.0
+  max: 1.0
+  description: >
+    Reward mixes action quality, symptom improvement, and penalties for invalid
+    actions. Episode score is normalized to the [0.0, 1.0] range.
 
-description: |
-  AI-powered symptom simulation environment.
-  The agent selects actions (rest, medicine, doctor)
-  to reduce severity and maximize recovery score.
+endpoints:
+  health: GET /
+  reset: POST /reset
+  step: POST /step
+  state: GET /state
+  tasks: GET /tasks
