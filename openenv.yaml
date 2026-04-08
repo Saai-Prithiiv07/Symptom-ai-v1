@@ -12,18 +12,39 @@ tasks:
     difficulty: easy
     max_steps: 6
     reward_range: [0.0, 1.0]
+    grader:
+      id: rule-based-triage-easy
+      type: deterministic_rule_based
+      score_range: [0.0, 1.0]
+      criteria:
+        - action should match recommended triage policy for easy cases
+        - reward should include partial progress signals
   - id: viral-fever
     name: "Viral Fever Management"
     description: "Moderate symptoms requiring balanced care decisions."
     difficulty: medium
     max_steps: 7
     reward_range: [0.0, 1.0]
+    grader:
+      id: rule-based-triage-medium
+      type: deterministic_rule_based
+      score_range: [0.0, 1.0]
+      criteria:
+        - action should match recommended triage policy for medium cases
+        - reward should include partial progress signals
   - id: red-flag-breathing
     name: "Breathing Difficulty Escalation"
     description: "High-risk case that should be escalated quickly."
     difficulty: hard
     max_steps: 8
     reward_range: [0.0, 1.0]
+    grader:
+      id: rule-based-triage-hard
+      type: deterministic_rule_based
+      score_range: [0.0, 1.0]
+      criteria:
+        - action should match recommended triage policy for hard cases
+        - reward should include partial progress signals
 
 action_space:
   type: object

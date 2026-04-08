@@ -14,12 +14,44 @@ class TaskConfig:
     initial_severity: int
     recommended_action: str
     max_steps: int
+    grader_id: str
+    grader_description: str
 
 
 TASKS: List[TaskConfig] = [
-    TaskConfig("seasonal-cold", "Seasonal Cold Triage", "easy", "Mild sore throat, low fever, can work normally.", 3, "rest", 6),
-    TaskConfig("viral-fever", "Viral Fever Management", "medium", "Persistent fever, fatigue, appetite loss for 2 days.", 6, "medicine", 7),
-    TaskConfig("red-flag-breathing", "Breathing Difficulty Escalation", "hard", "High fever with breathing discomfort and chest tightness.", 8, "doctor", 8),
+    TaskConfig(
+        "seasonal-cold",
+        "Seasonal Cold Triage",
+        "easy",
+        "Mild sore throat, low fever, can work normally.",
+        3,
+        "rest",
+        6,
+        "rule-based-triage-easy",
+        "Scores action correctness + symptom improvement with deterministic rules.",
+    ),
+    TaskConfig(
+        "viral-fever",
+        "Viral Fever Management",
+        "medium",
+        "Persistent fever, fatigue, appetite loss for 2 days.",
+        6,
+        "medicine",
+        7,
+        "rule-based-triage-medium",
+        "Scores action correctness + symptom improvement with deterministic rules.",
+    ),
+    TaskConfig(
+        "red-flag-breathing",
+        "Breathing Difficulty Escalation",
+        "hard",
+        "High fever with breathing discomfort and chest tightness.",
+        8,
+        "doctor",
+        8,
+        "rule-based-triage-hard",
+        "Scores action correctness + symptom improvement with deterministic rules.",
+    ),
 ]
 TASK_LOOKUP: Dict[str, TaskConfig] = {task.task_id: task for task in TASKS}
 
@@ -37,7 +69,22 @@ class SymptomEnvironment:
         return self._state
 
     def list_tasks(self) -> List[dict]:
-        return [{"id": t.task_id, "name": t.name, "difficulty": t.difficulty, "max_steps": t.max_steps, "reward_range": [0.0, 1.0]} for t in TASKS]
+        return [
+            {
+                "id": t.task_id,
+                "name": t.name,
+                "difficulty": t.difficulty,
+                "max_steps": t.max_steps,
+                "reward_range": [0.0, 1.0],
+                "grader": {
+                    "id": t.grader_id,
+                    "type": "deterministic_rule_based",
+                    "description": t.grader_description,
+                    "score_range": [0.0, 1.0],
+                },
+            }
+            for t in TASKS
+        ]
 
     def _ai_suggestion(self) -> str:
         if self.state.severity >= 7:
