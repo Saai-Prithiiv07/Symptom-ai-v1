@@ -1,5 +1,8 @@
 FROM python:3.10
 
+# Force UI render rebuild
+ENV HF_UI_RENDER=1
+
 WORKDIR /app
 
 COPY . /app
