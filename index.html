@@ -2,135 +2,725 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Symptom AI Pro Dashboard</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Symptom AI - Medical Decision Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-  font-family: 'Segoe UI';
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  color: white;
-  text-align: center;
-}
+  :root {
+    --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #dcfce7 100%);
+    --card-bg: rgba(255, 255, 255, 0.6);
+    --card-border: rgba(255, 255, 255, 0.4);
+    --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+    
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    
+    --color-severity: #ef4444; 
+    --color-energy: #3b82f6; 
+    --color-immunity: #10b981; 
+    
+    --btn-rest: #f59e0b;
+    --btn-medicine: #6366f1;
+    --btn-doctor: #ef4444;
+    --btn-reset: #475569;
 
-h1 {
-  color: #38bdf8;
-}
+    --badge-easy: #10b981;
+    --badge-medium: #f59e0b;
+    --badge-hard: #ef4444;
 
-button {
-  padding: 12px 20px;
-  margin: 8px;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s;
-}
+    --overlay-bg: rgba(255, 255, 255, 0.7);
+    --console-bg: #0f172a;
+    --console-text: #e2e8f0;
+  }
 
-button:hover {
-  transform: scale(1.1);
-}
+  [data-theme="dark"] {
+    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+    --card-bg: rgba(30, 41, 59, 0.4);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
 
-.reset { background: #22c55e; }
-.doctor { background: #ef4444; }
-.medicine { background: #3b82f6; }
-.rest { background: #f59e0b; }
+    --overlay-bg: rgba(15, 23, 42, 0.8);
+    --console-bg: #020617;
+    --console-text: #94a3b8;
+  }
 
-.card {
-  background: rgba(30, 41, 59, 0.8);
-  margin: 10px;
-  padding: 20px;
-  border-radius: 12px;
-  display: inline-block;
-  width: 150px;
-  box-shadow: 0px 0px 10px rgba(0,0,0,0.3);
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-canvas {
-  margin-top: 30px;
-  max-width: 700px;
-}
+  body {
+    font-family: 'Outfit', sans-serif; /* Upgraded to a more modern, geometric font */
+    background: var(--bg-gradient);
+    color: var(--text-main);
+    min-height: 100vh;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background 0.5s ease;
+  }
 
+  /* --- Top Navigation & Theme Toggle --- */
+  .top-bar {
+    width: 100%;
+    max-width: 1400px;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: -1rem;
+    z-index: 100;
+  }
+  .theme-toggle {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    color: var(--text-main);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  .theme-toggle:hover {
+    transform: scale(1.05);
+  }
+
+  /* --- Header --- */
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    position: relative;
+    z-index: 2;
+  }
+  .header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -1px;
+    background: linear-gradient(to right, #3b82f6, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: fadeIn 0.8s ease forwards;
+  }
+  .header p {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  /* --- Core Layout --- */
+  .dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 1400px;
+    z-index: 2;
+  }
+
+  .card {
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    border-radius: 24px;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+  }
+
+  /* --- Badges & Headers --- */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-header h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .badge {
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: white;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  .badge.easy { background: var(--badge-easy); }
+  .badge.medium { background: var(--badge-medium); }
+  .badge.hard { background: var(--badge-hard); }
+
+  /* --- Micro-animations / Progress Bars --- */
+  .status-board {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .metric-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .metric-header span[title] {
+    cursor: help;
+    border-bottom: 2px dotted var(--text-muted);
+  }
+  .progress-bg {
+    width: 100%;
+    height: 12px;
+    background: rgba(100, 116, 139, 0.15);
+    border-radius: 999px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); /* Spring effect */
+    position: relative;
+  }
+  /* Shimmer effect for progress bars */
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+  .fill-severity { background: linear-gradient(90deg, #f87171, var(--color-severity)); }
+  .fill-energy { background: linear-gradient(90deg, #60a5fa, var(--color-energy)); }
+  .fill-immunity { background: linear-gradient(90deg, #34d399, var(--color-immunity)); }
+
+  /* --- Numbers & Statuses --- */
+  .day-display {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+    background: rgba(100, 116, 139, 0.1);
+    padding: 0.6rem;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .day-display span { color: var(--btn-medicine); font-size: 1.4rem; }
+
+  /* --- Logging Console (Upgraded) --- */
+  .log-console {
+    background: var(--console-bg);
+    color: var(--console-text);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    padding: 1rem;
+    border-radius: 12px;
+    height: 90px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    box-shadow: inset 0 4px 6px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.05);
+    scroll-behavior: smooth;
+  }
+  .log-console::-webkit-scrollbar { width: 6px; }
+  .log-console::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+  .log-entry { margin: 0; animation: fadeIn 0.3s ease; }
+  .log-entry.reward { color: #34d399; }
+  .log-entry.warning { color: #fbbf24; }
+  .log-entry.ai { color: #818cf8; font-style: italic; }
+
+  /* --- Chart Container --- */
+  .chart-container {
+    position: relative;
+    height: 160px;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  /* --- Controls & Buttons --- */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: auto;
+  }
+  button {
+    padding: 0.85rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Ripple Action */
+  button::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 5px; height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+  }
+  button:active::after {
+    animation: ripple 0.6s ease-out;
+  }
+  @keyframes ripple {
+    0% { transform: scale(0) translate(-50%, -50%); opacity: 0.5; }
+    100% { transform: scale(20) translate(-50%, -50%); opacity: 0; }
+  }
+
+  button:active { transform: scale(0.96); }
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    filter: saturate(0);
+  }
+
+  .btn-rest { background: var(--btn-rest); box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3); }
+  .btn-medicine { background: var(--btn-medicine); box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3); }
+  .btn-doctor { background: var(--btn-doctor); grid-column: span 2; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3); }
+  .btn-reset { background: var(--btn-reset); grid-column: span 2; margin-top: 0.5rem; }
+
+  .btn-rest:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4); }
+  .btn-medicine:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4); }
+  .btn-doctor:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4); }
+
+  /* Subloader spinner */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: none;
+  }
+  button.loading .spinner { display: inline-block; }
+  button.loading .btn-text { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* --- Task Overlay Focus --- */
+  .task-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--overlay-bg);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    flex-direction: column;
+    gap: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    border-radius: 20px; /* offset inner radius */
+  }
+  .task-overlay b {
+    font-size: 1.5rem;
+    color: var(--text-main);
+  }
+  .task-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .overlay-btn {
+    background: var(--btn-medicine);
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  }
+  .overlay-btn:hover { background: #4f46e5; }
+
+  /* --- Toast Notifications (Floating Actions) --- */
+  #toast-area {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .toast {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    color: var(--text-main);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border-left: 5px solid var(--btn-medicine);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transition: all 0.3s ease;
+    border: 1px solid var(--card-border);
+  }
+  .toast.success { border-left-color: var(--color-immunity); }
+  .toast.warning { border-left-color: var(--btn-rest); }
+  .toast.error { border-left-color: var(--color-severity); }
+  
+  @keyframes slideIn { 
+    0% { transform: translateX(120%) scale(0.9); opacity: 0; } 
+    100% { transform: translateX(0) scale(1); opacity: 1; } 
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; transform: translateY(-20px) scale(0.95); }
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 768px) {
+    .dashboard { grid-template-columns: 1fr; }
+    .header h1 { font-size: 2.2rem; }
+    body { padding: 1rem; }
+  }
 </style>
 </head>
-
 <body>
 
-<h1>🧠 Symptom AI Pro Dashboard</h1>
-
-<button class="reset" onclick="resetEnv()">Reset</button>
-<button class="doctor" onclick="stepEnv('doctor')">Doctor</button>
-<button class="medicine" onclick="stepEnv('medicine')">Medicine</button>
-<button class="rest" onclick="stepEnv('rest')">Rest</button>
-
-<div>
-  <div class="card">Severity: <span id="severity">-</span></div>
-  <div class="card">Energy: <span id="energy">-</span></div>
-  <div class="card">Immunity: <span id="immunity">-</span></div>
-  <div class="card">Day: <span id="day">-</span></div>
+<div class="top-bar">
+  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">🌙 Dark Mode</button>
 </div>
 
-<h3 id="suggestion"></h3>
+<div class="header">
+  <h1>Symptom AI</h1>
+  <p>Medical Decision Simulator Dashboard</p>
+</div>
 
-<canvas id="chart"></canvas>
+<div id="toast-area"></div>
+
+<div class="dashboard" id="dashboard">
+  <!-- JavaScript builds cards here -->
+</div>
+
+<template id="task-card-template">
+  <!-- Adding fade-in delay for a premium cascade load effect -->
+  <div class="card" id="card-{id}" style="animation: fadeIn 0.6s ease {delay}s both;">
+    <div class="task-overlay" id="overlay-{id}">
+      <b>Task Standby</b>
+      <button class="overlay-btn" onclick="startTask('{id}')">Initialize Connection</button>
+    </div>
+
+    <div class="card-header">
+      <h3 class="task-title">Title Here</h3>
+      <span class="badge">Badge</span>
+    </div>
+
+    <div class="day-display">Current Step <span>Day <span class="day-val">0</span></span></div>
+
+    <div class="status-board">
+      <div class="metric">
+        <div class="metric-header">
+          <span title="Level of symptoms. Higher is worse (0-10).">Severity</span>
+          <span class="val-severity">0/10</span>
+        </div>
+        <div class="progress-bg">
+          <div class="progress-fill fill-severity" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="metric">
+        <div class="metric-header">
+          <span title="Patient energy level. Lower means rest is required (0-10).">Energy</span>
+          <span class="val-energy">0/10</span>
+        </div>
+        <div class="progress-bg">
+          <div class="progress-fill fill-energy" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="metric">
+        <div class="metric-header">
+          <span title="Immune system strength. Improves recovery time (0-10).">Immunity</span>
+          <span class="val-immunity">0/10</span>
+        </div>
+        <div class="progress-bg">
+          <div class="progress-fill fill-immunity" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="chart-{id}"></canvas>
+    </div>
+
+    <div class="log-console" id="log-{id}">
+      <div class="log-entry">System ready. Waiting to start...</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-rest action-btn" onclick="takeAction('{id}', 'rest', this)">
+        <div class="spinner"></div><span class="btn-text">🍵 Rest</span>
+      </button>
+      <button class="btn-medicine action-btn" onclick="takeAction('{id}', 'medicine', this)">
+        <div class="spinner"></div><span class="btn-text">💊 Meds</span>
+      </button>
+      <button class="btn-doctor action-btn" onclick="takeAction('{id}', 'doctor', this)">
+        <div class="spinner"></div><span class="btn-text">🏥 Doctor Visit</span>
+      </button>
+      <button class="btn-reset" onclick="startTask('{id}')">
+        <div class="spinner"></div><span class="btn-text">↺ Reset Environment</span>
+      </button>
+    </div>
+  </div>
+</template>
 
 <script>
+  Chart.defaults.font.family = "'Outfit', sans-serif";
+  Chart.defaults.color = "#94a3b8";
 
-let chart;
+  const tasksConfig = [
+    { id: 'seasonal-cold', name: 'Seasonal Cold', difficulty: 'easy' },
+    { id: 'viral-fever', name: 'Viral Fever', difficulty: 'medium' },
+    { id: 'red-flag-breathing', name: 'Breathing Issue', difficulty: 'hard' }
+  ];
 
-function updateUI(data) {
-  document.getElementById("severity").innerText = data.severity;
-  document.getElementById("energy").innerText = data.energy;
-  document.getElementById("immunity").innerText = data.immunity;
-  document.getElementById("day").innerText = data.day;
-  document.getElementById("suggestion").innerText = data.ai_suggestion;
+  const state = {};
+  let activeTask = null; 
 
-  if (!chart) {
-    const ctx = document.getElementById('chart');
-    chart = new Chart(ctx, {
+  function toggleTheme() {
+    const isDark = document.body.getAttribute('data-theme') === 'dark';
+    document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('theme-btn').innerText = isDark ? "🌙 Dark Mode" : "☀️ Light Mode";
+  }
+
+  function showToast(message, type="normal") {
+    const area = document.getElementById('toast-area');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = type === 'success' ? '✅' : type === 'warning' ? '⚠️' : type === 'error' ? '❌' : '✨';
+    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    
+    area.appendChild(toast);
+    
+    // Auto remove after 3s
+    setTimeout(() => {
+      toast.style.animation = "fadeOut 0.4s ease forwards";
+      setTimeout(() => toast.remove(), 400);
+    }, 3000);
+  }
+
+  function initUI() {
+    const dashboard = document.getElementById('dashboard');
+    const template = document.getElementById('task-card-template').innerHTML;
+
+    tasksConfig.forEach((task, index) => {
+      let html = template.replace(/{id}/g, task.id).replace(/{delay}/g, (index * 0.15).toString());
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      const card = tempDiv.firstElementChild;
+      
+      card.querySelector('.task-title').innerText = task.name;
+      const badge = card.querySelector('.badge');
+      badge.innerText = task.difficulty;
+      badge.classList.add(task.difficulty);
+
+      dashboard.appendChild(card);
+
+      state[task.id] = { chart: null, done: false, element: card };
+      document.getElementById(`overlay-${task.id}`).classList.add('active');
+      initChart(task.id);
+    });
+  }
+
+  function initChart(taskId) {
+    const ctx = document.getElementById(`chart-${taskId}`).getContext('2d');
+    const chart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: [],
         datasets: [
-          { label: 'Severity', data: [], borderColor: '#ef4444' },
-          { label: 'Energy', data: [], borderColor: '#22c55e' },
-          { label: 'Immunity', data: [], borderColor: '#3b82f6' }
+          { label: 'Severity', data: [], borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 },
+          { label: 'Energy', data: [], borderColor: '#60a5fa', backgroundColor: 'rgba(96, 165, 250, 0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 },
+          { label: 'Immunity', data: [], borderColor: '#34d399', backgroundColor: 'rgba(52, 211, 153, 0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 }
         ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+        scales: {
+          x: { display: false },
+          y: { min: 0, max: 10, display: true, beginAtZero: true, grid: { color: 'rgba(148, 163, 184, 0.1)' }, border: { display: false } }
+        },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
       }
     });
+    state[taskId].chart = chart;
   }
 
-  chart.data.labels.push("Day " + data.day);
-  chart.data.datasets[0].data.push(data.severity);
-  chart.data.datasets[1].data.push(data.energy);
-  chart.data.datasets[2].data.push(data.immunity);
-  chart.update();
-}
-
-async function resetEnv() {
-  const res = await fetch("/reset");
-  const data = await res.json();
-  chart = null;
-  updateUI(data);
-}
-
-async function stepEnv(action) {
-  const res = await fetch("/step", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ message: action })
-  });
-
-  const data = await res.json();
-  updateUI(data);
-
-  if (data.done) {
-    alert("✅ Simulation Completed!");
+  function logMessage(taskId, msg, type = 'normal') {
+    const consoleDiv = document.getElementById(`log-${taskId}`);
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.innerText = `> ${msg}`;
+    consoleDiv.appendChild(entry);
+    consoleDiv.scrollTop = consoleDiv.scrollHeight;
   }
-}
 
+  function clearHistory(taskId) {
+    const consoleDiv = document.getElementById(`log-${taskId}`);
+    consoleDiv.innerHTML = '';
+    const chart = state[taskId].chart;
+    chart.data.labels = [];
+    chart.data.datasets.forEach(ds => ds.data = []);
+    chart.update();
+  }
+
+  function updateVisuals(taskId, data, reward=null) {
+    const card = state[taskId].element;
+    const s = Math.min(10, Math.max(0, data.severity));
+    const e = Math.min(10, Math.max(0, data.energy));
+    const i = Math.min(10, Math.max(0, data.immunity));
+
+    requestAnimationFrame(() => {
+        card.querySelector('.fill-severity').style.width = `${(s/10)*100}%`;
+        card.querySelector('.fill-energy').style.width = `${(e/10)*100}%`;
+        card.querySelector('.fill-immunity').style.width = `${(i/10)*100}%`;
+    });
+
+    card.querySelector('.val-severity').innerText = `${s.toFixed(1)}/10`;
+    card.querySelector('.val-energy').innerText = `${e.toFixed(1)}/10`;
+    card.querySelector('.val-immunity').innerText = `${i.toFixed(1)}/10`;
+    card.querySelector('.day-val').innerText = data.day;
+
+    const chart = state[taskId].chart;
+    chart.data.labels.push(`Day ${data.day}`);
+    chart.data.datasets[0].data.push(s);
+    chart.data.datasets[1].data.push(e);
+    chart.data.datasets[2].data.push(i);
+    chart.update();
+
+    if (reward !== null) {
+      logMessage(taskId, `Reward calculated: [${reward}]`, reward > 0 ? 'reward' : 'warning');
+    }
+  }
+
+  async function startTask(taskId) {
+    if (activeTask && activeTask !== taskId) {
+      document.getElementById(`overlay-${activeTask}`).classList.add('active');
+    }
+    
+    activeTask = taskId;
+    document.getElementById(`overlay-${taskId}`).classList.remove('active');
+    clearHistory(taskId);
+    logMessage(taskId, `Authenticating environment connection...`);
+    showToast(`Environment ${taskId} ready`, 'success');
+
+    try {
+      const res = await fetch(`/reset?task_id=${taskId}`, { method: "POST" });
+      const responseBody = await res.json();
+      
+      const data = responseBody.observation || responseBody;
+      state[taskId].done = responseBody.done || false;
+      
+      updateVisuals(taskId, data);
+      logMessage(taskId, `Secure payload attached. Beginning Day 0.`, 'reward');
+      setButtonsState(taskId, false);
+
+      if(data.ai_suggestion) logMessage(taskId, `Assistant: ${data.ai_suggestion}`, 'ai');
+
+    } catch (err) {
+      logMessage(taskId, `Connection lost to inference server.`, 'warning');
+      showToast(`Failed to connect`, 'error');
+    }
+  }
+
+  async function takeAction(taskId, action, btnElement) {
+    if (state[taskId].done) return;
+
+    // Trigger visual spinner on this button
+    btnElement.classList.add('loading');
+    logMessage(taskId, `Sending directive: [${action.toUpperCase()}]`);
+    setButtonsState(taskId, true);
+
+    try {
+      const res = await fetch("/step", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ message: action })
+      });
+      const responseBody = await res.json();
+      
+      const data = responseBody.observation || responseBody;
+      updateVisuals(taskId, data, responseBody.reward);
+
+      if(data.ai_suggestion && !responseBody.done) {
+         logMessage(taskId, `Assistant: ${data.ai_suggestion}`, 'ai');
+      }
+
+      state[taskId].done = responseBody.done || false;
+      
+      if (state[taskId].done) {
+          const scoreStr = data.score !== undefined ? data.score.toFixed(2) : 'N/A';
+          logMessage(taskId, `Simulation Completed. Score: ${scoreStr}`, 'reward');
+          showToast(`Task Completed! Score: ${scoreStr}`, 'success');
+          setButtonsState(taskId, true);
+      } else {
+          setButtonsState(taskId, false);
+          showToast(`Action applied successfully`);
+      }
+
+    } catch (err) {
+      logMessage(taskId, `Directive failure. Abort.`, 'warning');
+      setButtonsState(taskId, false);
+      showToast('Error sending action', 'error');
+    } finally {
+      // Remove spinner
+      btnElement.classList.remove('loading');
+    }
+  }
+
+  function setButtonsState(taskId, disabled) {
+     const btns = state[taskId].element.querySelectorAll('.action-btn');
+     btns.forEach(b => b.disabled = disabled);
+  }
+
+  document.addEventListener('DOMContentLoaded', initUI);
 </script>
-
 </body>
 </html>

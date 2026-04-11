@@ -5,7 +5,7 @@ from openai import OpenAI
 # Required Hackathon Variables
 LLM_API_BASE = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN = os.getenv("HF_TOKEN", "dummy-token")
+API_KEY = os.getenv("OPENAI_API_KEY", os.getenv("HF_TOKEN", "dummy-token"))
 
 # Environment Variables
 ENV_BASE_URL = os.getenv("ENV_BASE_URL", "http://127.0.0.1:7860")
@@ -14,7 +14,7 @@ MAX_STEPS = 8
 SUCCESS_SCORE_THRESHOLD = 0.5
 
 client = OpenAI(
-    api_key=HF_TOKEN,
+    api_key=API_KEY,
     base_url=LLM_API_BASE,
 )
 

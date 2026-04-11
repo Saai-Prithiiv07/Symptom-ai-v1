@@ -1,13 +1,15 @@
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from server.symptom_env import SymptomEnvironment
 from server.models import SymptomAction
 
 app = FastAPI()
 env = SymptomEnvironment()
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def home():
-    return {"message": "Symptom AI Running", "status": "ok"}
+    with open("index.html", "r", encoding="utf-8") as f:
+        return f.read()
 
 @app.post("/reset")
 def reset(task_id: str | None = None):
